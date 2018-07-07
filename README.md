@@ -5,7 +5,7 @@
 ### This template includes:
 #### Gems:
 - Main Gems:
-  - `active_model_serializers`
+  - `acts_as_api`
   - `bcrypt`
   - `consul`
   - `email_validator`
@@ -17,7 +17,7 @@
   - `rack`
   - `ransack`
   - `smart_error`
-  - `paperclip`
+  - `devise`
 - Development Gems Only:
   - `pry-rails`
   - `faker`
