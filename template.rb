@@ -52,7 +52,8 @@ def setup_base
   return unless apply_base?
   directory 'app/controllers/concerns'
   copy_file 'app/controllers/application_controller.rb', force: true
-  copy_file 'app/controllers/v1/base_controller.rb', force: true
+  copy_file 'app/controllers/v1/api_controller.rb',      force: true
+  copy_file 'app/controllers/v1/base_controller.rb',     force: true
   directory 'config/locales', force: true
   directory 'lib/generators'
   environment "config.i18n.load_path += Dir[Rails.root.join('config', 'locales', '**', '*.{rb,yml}')]"
