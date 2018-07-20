@@ -16,8 +16,6 @@ def apply_template!
 
   template 'Gemfile.tt', force: true
 
-  copy_file 'Capfile' if apply_capistrano?
-
   copy_file 'gitignore',       '.gitignore',    force: true
   template  'ruby-version.tt', '.ruby-version', force: true
   # template  'ruby-gemset.tt',  '.ruby-gemset',  force: true
@@ -57,6 +55,7 @@ def setup_gems
   end
   setup_annotate
   setup_rspec if apply_rspec?
+  setup_capistrano if apply_capistrano?
 end
 
 def setup_bullet
@@ -78,6 +77,12 @@ end
 def setup_erd
   generate 'erd:install'
   append_to_file '.gitignore', 'erd.pdf'
+end
+
+def setup_capistrano
+  directory 'config/deploy'
+  template 'config/deploy.rb'
+  copy_file 'Capfile'
 end
 
 def setup_devise

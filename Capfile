@@ -12,7 +12,6 @@ require 'capistrano/rvm'
 require 'capistrano/bundler'
 require 'capistrano/rails/migrations'
 require 'capistrano/puma'
-require 'rollbar/capistrano3'
 require 'capistrano-resque'
 require 'capistrano-db-tasks'
 
