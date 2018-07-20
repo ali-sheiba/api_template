@@ -1,0 +1,11 @@
+Description:
+    Generate acts_as_api model presenters file and include it in the class model
+
+Example:
+    rails generate presenter user
+
+    This will create:
+        app/presenters/user_presenter.rb
+
+    And to User model:
+        include UserPresenter
