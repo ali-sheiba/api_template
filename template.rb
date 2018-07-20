@@ -18,13 +18,6 @@ def apply_template!
 
   copy_file 'Capfile' if apply_capistrano?
 
-  if apply_devise?
-    # insert_into_file 'Gemfile', "gem 'devise-bootstrapped', github: 'king601/devise-bootstrapped', branch: 'bootstrap4'\n", after: /'consul'\n/
-    insert_into_file 'Gemfile', "gem 'devise-jwt', '~> 0.5.6'\n", after: /'consul'\n/
-    insert_into_file 'Gemfile', "gem 'devise-i18n'\n", after: /'consul'\n/
-    insert_into_file 'Gemfile', "gem 'devise'\n", after: /'consul'\n/
-  end
-
   copy_file 'gitignore',       '.gitignore',    force: true
   template  'ruby-version.tt', '.ruby-version', force: true
   # template  'ruby-gemset.tt',  '.ruby-gemset',  force: true
@@ -39,8 +32,6 @@ def apply_template!
   setup_gems
   setup_envs
 
-  directory 'app/lib'
-
   run 'bundle binstubs bundler --force'
   run 'rails db:drop db:create db:migrate'
 
@@ -51,32 +42,10 @@ def apply_template!
   finished!
 end
 
-def apply_capistrano?
-  return @apply_capistrano if defined?(@apply_capistrano)
-  @apply_capistrano = \
-    ask_with_default('Use Capistrano for deployment?', :blue, 'no') \
-    =~ /^y(es)?/i
-end
+# Setup Gems
 
-def apply_devise?
-  return @apply_devise if defined?(@apply_devise)
-  @apply_devise = \
-    ask_with_default('Use Devise for user authentication?', :blue, 'no') \
-    =~ /^y(es)?/i
-end
-
-def apply_rspec?
-  return @apply_rspec if defined?(@apply_rspec)
-  @apply_rspec ||= \
-    ask_with_default('Use Rspec for unit testing?', :blue, 'no') \
-    =~ /^y(es)?/i
-end
-
-def ask_with_default(question, color, default)
-  return default unless $stdin.tty?
-  question = (question.split('?') << " [#{default}]?").join
-  answer = ask(question, color)
-  answer.to_s.strip.empty? ? default : answer
+def setup_envs
+  insert_into_file 'config/environments/development.rb', " \n config.action_mailer.delivery_method = :letter_opener\n", before: /^end/
 end
 
 def setup_gems
@@ -120,6 +89,7 @@ def setup_devise
 
   # Copy Controllers
   directory 'app/controllers/v1/auth'
+  copy_file 'app/lib/application_responder.rb'
 
   # Set BaseRoute
   gsub_file 'config/initializers/devise.rb', "  # config.parent_controller = 'DeviseController'", '  config.parent_controller = \'V1::Auth::DeviseController\''
@@ -174,10 +144,6 @@ def setup_devise_jwt
   insert_into_file 'app/models/user.rb', ",\n         :jwt_authenticatable, jwt_revocation_strategy: self", after: ':validatable'
 end
 
-def setup_envs
-  insert_into_file 'config/environments/development.rb', " \n config.action_mailer.delivery_method = :letter_opener\n", before: /^end/
-end
-
 def setup_annotate
   generate 'annotate:install'
 end
@@ -186,6 +152,38 @@ def setup_rspec
   generate 'rspec:install'
   apply 'spec/template.rb'
 end
+
+# Questions
+
+def apply_capistrano?
+  return @apply_capistrano if defined?(@apply_capistrano)
+  @apply_capistrano = \
+    ask_with_default('Use Capistrano for deployment?', :blue, 'no') \
+    =~ /^y(es)?/i
+end
+
+def apply_devise?
+  return @apply_devise if defined?(@apply_devise)
+  @apply_devise = \
+    ask_with_default('Use Devise for user authentication?', :blue, 'no') \
+    =~ /^y(es)?/i
+end
+
+def apply_rspec?
+  return @apply_rspec if defined?(@apply_rspec)
+  @apply_rspec ||= \
+    ask_with_default('Use Rspec for unit testing?', :blue, 'no') \
+    =~ /^y(es)?/i
+end
+
+def ask_with_default(question, color, default)
+  return default unless $stdin.tty?
+  question = (question.split('?') << " [#{default}]?").join
+  answer = ask(question, color)
+  answer.to_s.strip.empty? ? default : answer
+end
+
+# Basics
 
 def assert_minimum_rails_version
   requirement = Gem::Requirement.new(RAILS_REQUIREMENT)

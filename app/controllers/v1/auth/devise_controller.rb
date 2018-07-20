@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 class V1::Auth::DeviseController < ApplicationController
+  self.responder = ApplicationResponder
   before_action :configure_permitted_parameters, if: :devise_controller?
 
   respond_to :json
