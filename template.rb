@@ -5,6 +5,7 @@
 require 'fileutils'
 require 'shellwords'
 require 'tmpdir'
+require 'pry'
 
 RAILS_REQUIREMENT = '~> 5.2.0'.freeze
 
@@ -18,7 +19,7 @@ def apply_template!
   copy_file 'Capfile' if apply_capistrano?
 
   if apply_devise?
-    insert_into_file 'Gemfile', "gem 'devise-bootstrapped', github: 'king601/devise-bootstrapped', branch: 'bootstrap4'\n", after: /'consul'\n/
+    # insert_into_file 'Gemfile', "gem 'devise-bootstrapped', github: 'king601/devise-bootstrapped', branch: 'bootstrap4'\n", after: /'consul'\n/
     insert_into_file 'Gemfile', "gem 'devise-jwt', '~> 0.5.6'\n", after: /'consul'\n/
     insert_into_file 'Gemfile', "gem 'devise-i18n'\n", after: /'consul'\n/
     insert_into_file 'Gemfile', "gem 'devise'\n", after: /'consul'\n/
@@ -36,9 +37,16 @@ def apply_template!
   run  'bundle install'
 
   setup_gems
+  setup_envs
+
+  directory 'app/lib'
 
   run 'bundle binstubs bundler --force'
   run 'rails db:drop db:create db:migrate'
+
+  git :init
+  git add: '-A .'
+  git commit: " -m 'Initial commit :star:'"
 
   finished!
 end
@@ -59,7 +67,9 @@ end
 
 def apply_rspec?
   return @apply_rspec if defined?(@apply_rspec)
-  @apply_rspec ||= ask_with_default('Use Rspec for Testing?', :blue, 'no') =~ /^y(es)?/i
+  @apply_rspec ||= \
+    ask_with_default('Use Rspec for unit testing?', :blue, 'no') \
+    =~ /^y(es)?/i
 end
 
 def ask_with_default(question, color, default)
@@ -72,7 +82,10 @@ end
 def setup_gems
   setup_bullet
   setup_erd
-  setup_devise if apply_devise?
+  if apply_devise?
+    setup_devise
+    setup_devise_jwt
+  end
   setup_annotate
   setup_rspec if apply_rspec?
 end
@@ -100,10 +113,69 @@ end
 
 def setup_devise
   generate 'devise:install'
-  # generate 'devise:i18n:views'
-  # generate 'devise:views:bootstrapped'
-  insert_into_file 'config/initializers/devise.rb', "  config.secret_key = Rails.application.credentials.secret_key_base\n", after: /\|config\|\n/
+  gsub_file 'config/initializers/devise.rb', /#\s(config\.secret_key)\s=\s(.*)/, 'config.secret_key = Rails.application.credentials.secret_key_base'
+  insert_into_file 'config/environments/development.rb', " \n config.action_mailer.default_url_options = { host: 'localhost', port: 3000 }\n", before: /^end/
+
   generate 'devise', 'User'
+
+  # Copy Controllers
+  directory 'app/controllers/v1/auth'
+
+  # Set BaseRoute
+  gsub_file 'config/initializers/devise.rb', "  # config.parent_controller = 'DeviseController'", '  config.parent_controller = \'V1::Auth::DeviseController\''
+
+  # Set Rouets
+  gsub_file 'config/routes.rb', 'devise_for :users' do
+    <<-RUBY
+devise_for :users,
+    controllers: {
+      sessions: 'v1/auth/sessions',
+      registrations: 'v1/auth/registrations',
+      passwords: 'v1/auth/passwords'
+    },
+    path: 'v1/auth',
+    defaults: { format: :json },
+    path_names: { sign_in: 'login', sign_out: 'logout', registration: 'register' }
+    RUBY
+  end
+end
+
+def setup_devise_jwt
+  inject_into_file 'config/initializers/devise.rb', before: /^  # ==> Controller configuration/ do
+    <<-RUBY
+    Devise.setup do |config|
+      config.jwt do |jwt|
+        jwt.secret = Rails.application.credentials.secret_key_base
+        jwt.expiration_time = 1.day
+      end
+    end
+    RUBY
+  end
+
+  # COPY jwt_warden_strategy
+  copy_file 'config/initializers/jwt_warden_strategy.rb'
+
+  # Generate WhitelistedJwt Model
+  generate 'model', 'WhitelistedJwt'
+
+  wl_migration = Dir['db/migrate/*'].find {|n| n.include?('create_whitelisted_jwts') }
+
+  insert_into_file wl_migration, after: ":whitelisted_jwts do |t|\n" do
+    <<-RUBY
+      t.references :user, foreign_key: { on_delete: :cascade }, null: false
+      t.string :jti, null: false
+      t.string :aud
+      t.datetime :exp, null: false
+      t.index :jti, unique: true
+    RUBY
+  end
+
+  inject_into_file 'app/models/user.rb', '  include Devise::JWT::RevocationStrategies::Whitelist', after: "User < ApplicationRecord\n"
+  insert_into_file 'app/models/user.rb', ",\n         :jwt_authenticatable, jwt_revocation_strategy: self", after: ':validatable'
+end
+
+def setup_envs
+  insert_into_file 'config/environments/development.rb', " \n config.action_mailer.delivery_method = :letter_opener\n", before: /^end/
 end
 
 def setup_annotate
@@ -150,6 +222,12 @@ def gemfile_requirement(name)
   @original_gemfile ||= IO.read('Gemfile')
   req = @original_gemfile[/gem\s+['"]#{name}['"]\s*(,[><~= \t\d\.\w'"]*)?.*$/, 1]
   req && req.tr("'", %(")).strip.sub(/^,\s*"/, ', "')
+end
+
+def run_bundle
+  run 'bin/spring stop'
+  p "Template setted."
+  return
 end
 
 def finished!
