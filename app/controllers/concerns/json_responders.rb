@@ -1,11 +1,6 @@
 module JsonResponders
-  # Render Data
-  def render_data(data:, message: I18n.t(:data_found))
-    render json: { success: true, message: message, **data }, status: :ok
-  end
-
   # Render a message
-  def render_success(message:, data: {})
+  def render_success(message: I18n.t(:data_found), data: {})
     render json: { success: true, message: message, **data }, status: :ok
   end
 
@@ -35,7 +30,7 @@ module JsonResponders
     render_smart_error(error: error, status: :not_found, **options)
   end
 
-  def render_smart_error(error, options = {})
+  def render_smart_error(error:, **options)
     response = SmartError.handle(error, options).to_h
 
     render_error(
@@ -56,8 +51,7 @@ module JsonResponders
     Rails.logger.debug("  \e[41;1mError Response:\e[0m\e[41m #{error_code} | #{message}\e[0m")
 
     render json: {
-      success:    false,
-      message:    message,
+      error:      message,
       error_code: error_code,
       data:       data
     }, status: status

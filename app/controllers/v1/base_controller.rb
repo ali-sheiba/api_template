@@ -5,11 +5,12 @@ class V1::BaseController < V1::ApiController
   # GET : /v2/{resource}
   def index
     data = {
-      index_key => get_collection.as_api_response(index_template, template_injector),
-      pagination: pagination(get_collection)
+      index_key => collection.as_api_response(index_template, template_injector),
+      pagination: pagination(collection)
     }
+
     yield data if block_given?
-    render_success(data: data)
+    render_success(data: data, message: index_message)
   end
 
   ## ------------------------------------------------------------ ##
@@ -32,7 +33,7 @@ class V1::BaseController < V1::ApiController
       # yield data if block_given?
       render_created(data: data, message: created_message)
     else
-      render_unprocessable_entity(message: get_resource.errors.full_messages.join(', '))
+      render_unprocessable_entity(error: get_resource)
     end
   end
 
@@ -45,7 +46,7 @@ class V1::BaseController < V1::ApiController
       # yield data if block_given?
       render_success(data: data, message: updated_message)
     else
-      render_unprocessable_entity(message: get_resource.errors.full_messages.join(', '))
+      render_unprocessable_entity(error: get_resource)
     end
   end
 
@@ -56,7 +57,7 @@ class V1::BaseController < V1::ApiController
     if get_resource.destroy
       render_success(message: destroyed_message)
     else
-      render_unprocessable_entity(message: get_resource.errors.full_messages.join(', '))
+      render_unprocessable_entity(error: get_resource)
     end
   end
 
@@ -98,7 +99,7 @@ class V1::BaseController < V1::ApiController
       resource_params
     end
 
-    def get_collection
+    def collection
       @collection ||= build_collection
     end
 
@@ -157,15 +158,20 @@ class V1::BaseController < V1::ApiController
       :index
     end
 
+    # Messages
+    def index_message
+      I18n.t(collection.to_a.size.zero? ? 'no_data_found' : 'data_found')
+    end
+
     def created_message
-      I18n.t("#{resource_name}.created")
+      I18n.t(:x_created_successfully, name: resource_class.model_name.human)
     end
 
     def updated_message
-      I18n.t("#{resource_name}.updated")
+      I18n.t(:x_update_successfully, name: resource_class.model_name.human)
     end
 
     def destroyed_message
-      I18n.t("#{resource_name}.deleted")
+      I18n.t(:x_deleted_successfully, name: resource_class.model_name.human)
     end
 end

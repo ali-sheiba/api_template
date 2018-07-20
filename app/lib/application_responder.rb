@@ -5,8 +5,9 @@ class ApplicationResponder < ActionController::Responder
 
   def json_resource_errors
     {
-      message: resource.errors.full_messages.to_sentence,
-      errors:  resource.errors
+      error:      resource.errors.full_messages.to_sentence,
+      error_code: 1010,
+      data:       resource.errors.messages.transform_values(&:to_sentence)
     }
   end
 end
