@@ -1,0 +1,21 @@
+en:
+  errors:
+    # 10XX : Main App Errors
+    '1000': 'App Server Error, please contact the admin' # Global Error
+    '1001': 'Missing Headers'
+    '1002': 'Missing Parameters'
+    '1003': 'Invalid offset or limit'
+    '1004': 'Invalid Locale'
+    '1005': 'Invalid Timezone'
+    '1006': 'You exceeded the limit of requests per minute, Please try again after sometime.'
+
+    # 11XX : Http Errors
+    '1101': 'Unauthorized'
+    '1102': 'Not authorized to access'
+    '1103': 'Unprocessable Entity'
+    '1104': 'Authentication Failed'
+    '1105': 'Not Found'
+
+  activerecord:
+    errors:
+      messages:

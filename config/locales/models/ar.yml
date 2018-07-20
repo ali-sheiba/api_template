@@ -1,0 +1,6 @@
+ar:
+  activerecord:
+    models:
+      user:
+        one:   مستخدم
+        other: مستخدمين

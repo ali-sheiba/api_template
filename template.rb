@@ -29,6 +29,7 @@ def apply_template!
 
   setup_gems
   setup_envs
+  setup_base
 
   run 'bundle binstubs bundler --force'
   run 'rails db:drop db:create db:migrate'
@@ -44,6 +45,18 @@ end
 
 def setup_envs
   insert_into_file 'config/environments/development.rb', " \n config.action_mailer.delivery_method = :letter_opener\n", before: /^end/
+  environment 'config.log_level = :debug', env: 'production'
+end
+
+def setup_base
+  return unless apply_base?
+  directory 'app/controllers/concerns'
+  copy_file 'app/controllers/application_controller.rb', force: true
+  copy_file 'app/controllers/v1/base_controller.rb', force: true
+  directory 'config/locales', force: true
+  directory 'lib/generators'
+  environment "config.i18n.load_path += Dir[Rails.root.join('config', 'locales', '**', '*.{rb,yml}')]"
+  environment 'config.i18n.available_locales = [:en, :ar]'
 end
 
 def setup_gems
@@ -91,6 +104,7 @@ def setup_devise
   insert_into_file 'config/environments/development.rb', " \n config.action_mailer.default_url_options = { host: 'localhost', port: 3000 }\n", before: /^end/
 
   generate 'devise', 'User'
+  generate 'devise:i18n:locale', 'ar'
 
   # Copy Controllers
   directory 'app/controllers/v1/auth'
@@ -178,6 +192,13 @@ def apply_rspec?
   return @apply_rspec if defined?(@apply_rspec)
   @apply_rspec ||= \
     ask_with_default('Use Rspec for unit testing?', :blue, 'no') \
+    =~ /^y(es)?/i
+end
+
+def apply_base?
+  return @apply_base if defined?(@apply_base)
+  @apply_base ||= \
+    ask_with_default('Use My Magic Recipe (DRY BaseController, I18ns, SmartErrors)?', :green, 'yes') \
     =~ /^y(es)?/i
 end
 

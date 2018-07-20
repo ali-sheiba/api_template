@@ -1,0 +1,11 @@
+ar:
+  data_found:             'تم العثور على البيانات'
+  no_data_found:          'لاتوجد بيانات'
+  not_found:              'غير موجود'
+  x_not_found:            '%{name} غير موجود!'
+  update_successfully:    'تم التحديث بنجاح'
+  x_update_successfully:  'تم تحديث %{name} بنجاح'
+  created_successfully:   'تم الإنشاء بنجاح'
+  x_created_successfully: 'تم إنشاء %{name} بنجاح'
+  deleted_successfully:   'تم الحذف بنجاح'
+  x_deleted_successfully: 'تم حذف %{name} بنجاح'

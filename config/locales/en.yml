@@ -1,0 +1,11 @@
+en:
+  data_found:             'Data found'
+  no_data_found:          'No data found'
+  not_found:              'Not found'
+  x_not_found:            '%{name} not found!'
+  update_successfully:    'Updated successfully'
+  x_update_successfully:  '%{name} updated successfully'
+  created_successfully:   'Created successfully'
+  x_created_successfully: '%{name} created successfully'
+  deleted_successfully:   'Deleted successfully'
+  x_deleted_successfully: '%{name} deleted successfully'
