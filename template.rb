@@ -5,7 +5,7 @@
 require 'fileutils'
 require 'shellwords'
 require 'tmpdir'
-require 'pry'
+# require 'pry'
 
 RAILS_REQUIREMENT = '~> 5.2.0'.freeze
 
