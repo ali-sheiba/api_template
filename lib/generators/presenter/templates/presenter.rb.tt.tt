@@ -1,11 +1,11 @@
-module <%=class_name%>Presenter
+<%="module \u003C%=class_name%\u003EPresenter
   extend ActiveSupport::Concern
 
   included do
     acts_as_api
 
     api_accessible :base do |t|
-      <%= columns %>
+      \u003C%= columns %\u003E
     end
 
     api_accessible :index, extend: :base
@@ -13,3 +13,4 @@ module <%=class_name%>Presenter
     api_accessible :show, extend: :index
   end
 end
+"%>
