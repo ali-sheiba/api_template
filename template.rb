@@ -20,10 +20,6 @@ def apply_template!
   template  'ruby-version.tt', '.ruby-version', force: true
   # template  'ruby-gemset.tt',  '.ruby-gemset',  force: true
 
-  # apply 'app/template.rb'
-  # apply 'config/template.rb'
-  # apply 'lib/template.rb'
-
   run  'gem install bundler'
   run  'bundle install'
 
@@ -51,12 +47,20 @@ end
 def setup_base
   return unless apply_base?
   directory 'app/controllers/concerns'
-  copy_file 'app/controllers/v1/api_controller.rb',      force: true
-  copy_file 'app/controllers/v1/base_controller.rb',     force: true
+  directory 'app/controllers/v1', force: true, exclude_pattern: /auth/
+  directory 'app/models'
   directory 'config/locales', force: true
   directory 'lib/generators'
   environment "config.i18n.load_path += Dir[Rails.root.join('config', 'locales', '**', '*.{rb,yml}')]"
   environment 'config.i18n.available_locales = [:en, :ar]'
+
+  insert_into_file 'config/routes.rb', before: /^end/ do
+    <<-RUBY
+  namespace :v1, defaults: { format: :json } do
+    # API Resources here
+  end
+    RUBY
+  end
 end
 
 def setup_gems
@@ -177,21 +181,21 @@ end
 def apply_capistrano?
   return @apply_capistrano if defined?(@apply_capistrano)
   @apply_capistrano = \
-    ask_with_default('Use Capistrano for deployment?', :blue, 'no') \
+    ask_with_default('Use Capistrano for deployment?', :green, 'no') \
     =~ /^y(es)?/i
 end
 
 def apply_devise?
   return @apply_devise if defined?(@apply_devise)
   @apply_devise = \
-    ask_with_default('Use Devise for user authentication?', :blue, 'no') \
+    ask_with_default('Use Devise for user authentication?', :green, 'no') \
     =~ /^y(es)?/i
 end
 
 def apply_rspec?
   return @apply_rspec if defined?(@apply_rspec)
   @apply_rspec ||= \
-    ask_with_default('Use Rspec for unit testing?', :blue, 'no') \
+    ask_with_default('Use Rspec for unit testing?', :green, 'no') \
     =~ /^y(es)?/i
 end
 

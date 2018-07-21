@@ -1,12 +1,12 @@
 module JsonResponders
   # Render a message
   def render_success(message: I18n.t(:data_found), data: {})
-    render json: { success: true, message: message, **data }, status: :ok
+    render json: { message: message, **data }, status: :ok
   end
 
   # Render Created
   def render_created(data:, message: I18n.t(:created_successfully))
-    render json: { success: true, message: message, **data }, status: :created
+    render json: { message: message, **data }, status: :created
   end
 
   ## Error Responders
