@@ -1,13 +1,7 @@
 <%="# frozen_string_literal: true
 
 class \u003C%=class_name%\u003EController \u003C V1::BaseController
-  # power :\u003C%=file_name.pluralize%\u003E, map: {
-  #   [:index]   => :\u003C%=file_name.pluralize%\u003E_index,
-  #   [:show]    => :\u003C%=file_name%\u003E_show,
-  #   [:create]  => :creatable_\u003C%=file_name%\u003E,
-  #   [:update]  => :updatable_\u003C%=file_name%\u003E,
-  #   [:destroy] => :destroyable_\u003C%=file_name%\u003E
-  # }, as: :\u003C%=file_name.pluralize%\u003E_scope
+\u003C%= controller_powers -%\u003E
 
   ## ------------------------------------------------------------ ##
 
@@ -45,19 +39,13 @@ class \u003C%=class_name%\u003EController \u003C V1::BaseController
 
   # Whitelist parameters
   def \u003C%=file_name.singularize%\u003E_params
-    params.permit()
+    params.require(:\u003C%=model_name.downcase%\u003E).permit()
   end
 
   # Search filters
-  def search_params
-    {
-      id_eq: params[:id]
-    }
-  end
+  # def search_params; end
 
   # Custom ordering and sorting
-  def get_order
-    { sort_column(:created_at) =\u003E sort_direction(:desc) }
-  end
+  # def get_order; end
 end
 "%>
