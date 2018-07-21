@@ -41,7 +41,11 @@ end
 
 def setup_envs
   insert_into_file 'config/environments/development.rb', " \n config.action_mailer.delivery_method = :letter_opener\n", before: /^end/
-  environment 'config.log_level = :debug', env: 'production'
+  gsub_file 'config/environments/production.rb', 'config.log_level = :debug', 'config.log_level = :error'
+  gsub_file 'config/environments/production.rb', 'ActiveSupport::Logger.new(STDOUT)', 'ActiveSupport::Logger.new(config.paths[\'log\'].first, 1, 50.megabyte)'
+
+  copy_file 'config/initializers/rack_attack.rb'
+  environment 'config.middleware.use Rack::Attack'
 end
 
 def setup_base
