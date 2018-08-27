@@ -140,11 +140,9 @@ end
 def setup_devise_jwt
   inject_into_file 'config/initializers/devise.rb', before: /^  # ==> Controller configuration/ do
     <<-RUBY
-    Devise.setup do |config|
-      config.jwt do |jwt|
-        jwt.secret = Rails.application.credentials.secret_key_base
-        jwt.expiration_time = 1.day
-      end
+    config.jwt do |jwt|
+      jwt.secret = Rails.application.credentials.secret_key_base
+      jwt.expiration_time = 1.day
     end
     RUBY
   end

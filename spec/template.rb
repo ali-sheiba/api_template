@@ -19,8 +19,8 @@ inject_into_file 'spec/rails_helper.rb', before: /^end/ do
   config.include Requests::JsonHelpers, type: :request
   # config.include Requests::AuthHelpers, type: :request
 
-  Shoulda::Matchers.configure do |config|
-    config.integrate do |with|
+  Shoulda::Matchers.configure do |matchers|
+    matchers.integrate do |with|
       with.test_framework :rspec
       with.library :rails
     end
