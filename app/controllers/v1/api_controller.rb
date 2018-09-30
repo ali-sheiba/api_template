@@ -3,6 +3,7 @@
 class V1::ApiController < ApplicationController
   include JsonResponders
   include ExceptionHandler
+  include MissingData
   include Consul::Controller
 
   before_action :authenticate_user!

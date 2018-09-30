@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module JsonResponders
   # Render a message
   def render_success(message: I18n.t(:data_found), data: {})

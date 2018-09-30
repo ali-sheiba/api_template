@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module ExceptionHandler
   extend ActiveSupport::Concern
 
@@ -32,18 +34,20 @@ module ExceptionHandler
   end
 
   # Handle StandardError
-  def server_error!(e)
-    Rails.logger.error(e.message)
+  def server_error!(err)
+    Rails.logger.error(err.message)
 
-    e.backtrace.each do |line|
+    err.backtrace.each do |line|
       Rails.logger.error(line)
     end
 
-    data = Rails.env.production? ? {} : {
-      error:     e.message,
-      backtrace: e.backtrace
-    }
+    unless Rails.env.production?
+      data = {
+        error:     err.message,
+        backtrace: err.backtrace
+      }
+    end
 
-    render_bad_request(error: 1000, data: data)
+    render_bad_request(error: 1000, data: data || {})
   end
 end

@@ -19,7 +19,8 @@ class V1::Auth::RegistrationsController < Devise::RegistrationsController
         sign_up(resource_name, resource)
         render json: {
           message: find_message(:signed_up),
-          resource_name => resource
+          resource_name => resource,
+          token: current_token
         }
       else
         expire_data_after_sign_in!
