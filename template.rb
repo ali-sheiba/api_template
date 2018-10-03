@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Inspired by :
 # - https://github.com/excid3/jumpstart
 # - https://github.com/astrocket/react-rails-template
@@ -5,9 +7,8 @@
 require 'fileutils'
 require 'shellwords'
 require 'tmpdir'
-# require 'pry'
 
-RAILS_REQUIREMENT = '~> 5.2.0'.freeze
+RAILS_REQUIREMENT = '~> 5.2.0'
 
 def apply_template!
   assert_minimum_rails_version
@@ -18,7 +19,7 @@ def apply_template!
 
   copy_file 'gitignore',       '.gitignore',    force: true
   template  'ruby-version.tt', '.ruby-version', force: true
-  # template  'ruby-gemset.tt',  '.ruby-gemset',  force: true
+  template  'ruby-gemset.tt',  '.ruby-gemset',  force: true
 
   run  'gem install bundler'
   run  'bundle install'
@@ -26,9 +27,12 @@ def apply_template!
   setup_gems
   setup_envs
   setup_base
+  setup_react
 
   run 'bundle binstubs bundler --force'
   run 'rails db:drop db:create db:migrate'
+
+  setup_rubocop
 
   git :init
   git add: '-A .'
@@ -50,6 +54,7 @@ end
 
 def setup_base
   return unless apply_base?
+
   directory 'app/controllers/concerns'
   directory 'app/controllers/v1', force: true, exclude_pattern: /auth/
   directory 'app/models'
@@ -97,7 +102,7 @@ end
 
 def setup_erd
   generate 'erd:install'
-  append_to_file '.gitignore', 'erd.pdf'
+  append_to_file '.gitignore', "erd.pdf\n"
 end
 
 def setup_capistrano
@@ -123,16 +128,16 @@ def setup_devise
 
   # Set Rouets
   gsub_file 'config/routes.rb', 'devise_for :users' do
-    <<-RUBY
-devise_for :users,
-    controllers: {
-      sessions: 'v1/auth/sessions',
-      registrations: 'v1/auth/registrations',
-      passwords: 'v1/auth/passwords'
-    },
-    path: 'v1/auth',
-    defaults: { format: :json },
-    path_names: { sign_in: 'login', sign_out: 'logout', registration: 'register' }
+    <<~RUBY
+      devise_for :users,
+          controllers: {
+            sessions: 'v1/auth/sessions',
+            registrations: 'v1/auth/registrations',
+            passwords: 'v1/auth/passwords'
+          },
+          path: 'v1/auth',
+          defaults: { format: :json },
+          path_names: { sign_in: 'login', sign_out: 'logout', registration: 'register' }
     RUBY
   end
 end
@@ -153,7 +158,7 @@ def setup_devise_jwt
   # Generate WhitelistedJwt Model
   generate 'model', 'WhitelistedJwt'
 
-  wl_migration = Dir['db/migrate/*'].find {|n| n.include?('create_whitelisted_jwts') }
+  wl_migration = Dir['db/migrate/*'].find { |n| n.include?('create_whitelisted_jwts') }
 
   insert_into_file wl_migration, after: ":whitelisted_jwts do |t|\n" do
     <<-RUBY
@@ -178,10 +183,40 @@ def setup_rspec
   apply 'spec/template.rb'
 end
 
+def setup_rubocop
+  copy_file '.rubocop.yml'
+  run 'rubocop --auto-correct'
+end
+
+def setup_react
+  run 'rails webpacker:install'
+  run 'rails webpacker:install:react'
+  insert_into_file 'package.json', before: /^}\n$/ do
+    <<-RUBY
+  ,
+  "eslintConfig": {
+    "env": {
+      "browser": true,
+      "node": true
+    }
+  },
+  "scripts": {
+    "start": "./bin/webpack-dev-server",
+    "build": "./bin/rails webpacker:compile",
+    "lint": "eslint --ext .js --ext .jsx ./app/javascript"
+  }
+    RUBY
+  end
+  run 'yarn add bootstrap classnames jwt-decode lodash moment react-redux react-router-dom redux redux-form redux-logger redux-promise-middleware redux-thunk'
+  run 'yarn add --dev babel-eslint eslint eslint-config-airbnb eslint-loader eslint-plugin-import eslint-plugin-jsx-a11y eslint-plugin-react'
+  copy_file '.eslintrc'
+end
+
 # Questions
 
 def apply_capistrano?
   return @apply_capistrano if defined?(@apply_capistrano)
+
   @apply_capistrano = \
     ask_with_default('Use Capistrano for deployment?', :green, 'no') \
     =~ /^y(es)?/i
@@ -189,6 +224,7 @@ end
 
 def apply_devise?
   return @apply_devise if defined?(@apply_devise)
+
   @apply_devise = \
     ask_with_default('Use Devise for user authentication?', :green, 'no') \
     =~ /^y(es)?/i
@@ -196,6 +232,7 @@ end
 
 def apply_rspec?
   return @apply_rspec if defined?(@apply_rspec)
+
   @apply_rspec ||= \
     ask_with_default('Use Rspec for unit testing?', :green, 'no') \
     =~ /^y(es)?/i
@@ -203,13 +240,23 @@ end
 
 def apply_base?
   return @apply_base if defined?(@apply_base)
+
   @apply_base ||= \
     ask_with_default('Use My Magic Recipe (DRY BaseController, I18ns, SmartErrors)?', :green, 'yes') \
     =~ /^y(es)?/i
 end
 
+def apply_react_js?
+  return @apply_react_js if defined?(@apply_react_js)
+
+  @apply_react_js ||= \
+    ask_with_default('Use Webpacker and ReactJS?', :green, 'no') \
+    =~ /^y(es)?/i
+end
+
 def ask_with_default(question, color, default)
   return default unless $stdin.tty?
+
   question = (question.split('?') << " [#{default}]?").join
   answer = ask(question, color)
   answer.to_s.strip.empty? ? default : answer
@@ -229,13 +276,14 @@ end
 
 def assert_postgresql
   return if IO.read('Gemfile') =~ /^\s*gem ['"]pg['"]/
+
   raise Rails::Generators::Error,
         'This template requires PostgreSQL, '\
         'but the pg gem isn’t present in your Gemfile.'
 end
 
 def add_template_repository_to_source_path
-  if __FILE__ =~ %r{\Ahttps?://}
+  if __FILE__.match?(%r{\Ahttps?://})
     source_paths.unshift(tempdir = Dir.mktmpdir('rails-template-'))
     at_exit { FileUtils.remove_entry(tempdir) }
     git clone: [
@@ -256,8 +304,8 @@ end
 
 def run_bundle
   run 'bin/spring stop'
-  p "Template setted."
-  return
+  p 'Template setted.'
+  nil
 end
 
 def finished!

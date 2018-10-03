@@ -1,0 +1,27 @@
+{
+  "parser": "babel-eslint",
+  "extends": [
+    "airbnb"
+  ],
+  "plugins": [
+    "react"
+  ],
+  "rules": {
+    "react/button-has-type": 0,
+    "react/require-default-props": 0
+  },
+  "settings": {
+    "import/resolver": {
+      "node": {
+        "paths": ["app/javascript"]
+      }
+    }
+  },
+  "globals": {
+    "alert": true,
+    "localStorage": true,
+    "sessionStorage": true,
+    "window": true,
+    "document": true
+  }
+}
