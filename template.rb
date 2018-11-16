@@ -189,6 +189,8 @@ def setup_rubocop
 end
 
 def setup_react
+  return unless apply_react_js?
+
   run 'rails webpacker:install'
   run 'rails webpacker:install:react'
   insert_into_file 'package.json', before: /^}\n$/ do
