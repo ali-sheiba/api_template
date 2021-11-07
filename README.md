@@ -23,7 +23,6 @@ rails new app \
   - `jwt`
   - `kaminari`
   - `rack`
-  - `rack`
   - `ransack`
   - `smart_error`
   - `devise`
